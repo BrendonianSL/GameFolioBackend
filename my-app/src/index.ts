@@ -1,68 +1,45 @@
 import { serve } from '@hono/node-server'
+import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import type { LoginSchema } from '../schemas/responseSchemas.js';
-import { users } from '../schemas/databaseSchemas.js';
+import { LoginSchema } from '../schemas/responseSchemas.js';
+import { users, test } from '../schemas/databaseSchemas.js';
+import { eq } from 'drizzle-orm';
 
 // Database password is z9hTBmX7JE0bNvMD;
 const app = new Hono();
 
 // The exclamation is known as a non-null assertion. Look it up if needed.
-const connectionString : string = process.env.DATABASE_URL!;
-const client = postgres(connectionString, { prepare: false});
+const connectionString : string = 'postgresql://postgres.abkcgepzksnuyrqcgfav:z9hTBmX7JE0bNvMD@aws-1-us-east-2.pooler.supabase.com:6543/postgres';
+const client = postgres(connectionString, { prepare: false });
 const db = drizzle(client);
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 });
 
-app.post('/login', async (c) => {
-  // Grabs body from the request. Ensures it matches the schema.
-  const { username, password} = await c.req.json<LoginSchema>();
+app.post('/register', zValidator('json', LoginSchema), async (c) => {
+  // console.log('Register Route Has Been Tagged');
 
-  // Sanitize Data.
-
-  // Check if The Data Is Valid.
-});
-
-app.post('/register', async (c) => {
-  console.log('Register Route Has Been Tagged');
-  const { username, password } = await c.req.json<LoginSchema>();
-  // Sanitize Data.
+  // Validate User Input From Post Request.
+  const { username, password } = c.req.valid('json');
 
   // Check if the user is already in the database.
+  const user = await db.select().from(users).where(eq(users.username, username));
+
+  if (user.length > 0) return c.text('User already exists', 400);
 
   // Create user.
-  const result = await db.insert(users).values({
-    username,
-    password,
-  }).returning();
+  const result = await db.insert(users).values({ username, password});
 
-  return c.json(result);
-})
-
-// Route responsible for fetching game by name.
-app.get('/search/:name', async (c) => {
-
-  // Grabs name from the URL.
-  const name = c.req.param('name');
-
-  // Makes fetch call to the API.
-  const response = await fetch(`https://api.rawg.io/api/games?key=${process.env.RAWG_SECRET}&search=${name}`, {
-    method: 'GET',
-  });
-
-  // Check the response.
-  if(!response.ok) {
-    console.log('Error');
-    return c.text(response.statusText);
+  if(result) {
+    // console.log('User creation successful');
+    return c.text('User has been created successfully', 201); 
+  } else {
+    // console.log('User creation failed');
+    return c.text('User creation failed', 400);
   }
-
-  // Parse response.
-  const data = await response.json();
-
-  return c.json(data);
 });
 
 serve({

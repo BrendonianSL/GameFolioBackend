@@ -10,9 +10,7 @@ export const gameSchema = z.object({
     )
 });
 
-const loginSchema = z.object({
+export const LoginSchema = z.object({
     username: z.string(),
-    password: z.string()
+    password: z.string(),
 });
-
-export type LoginSchema = z.infer<typeof loginSchema>;

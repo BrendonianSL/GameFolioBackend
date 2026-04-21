@@ -4,4 +4,9 @@ export const users = pgTable("users", {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     username: text().notNull().unique(),
     password: text().notNull()
-})
+});
+
+export const test = pgTable("test", {
+    username: text(),
+    password: text(),
+});
