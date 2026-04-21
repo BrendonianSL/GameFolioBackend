@@ -1,2 +1,1 @@
-# MovieDB_Backend
-Backend for the MovieDB
+# GameFolio Backend
