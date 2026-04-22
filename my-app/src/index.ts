@@ -8,6 +8,7 @@ import { users, test } from '../schemas/databaseSchemas.js';
 import { eq } from 'drizzle-orm';
 
 // Database password is z9hTBmX7JE0bNvMD;
+// Install XSS, Hono Cors, ZORPC, And Hono CSRF. Look into API Keys.
 const app = new Hono();
 
 // The exclamation is known as a non-null assertion. Look it up if needed.
@@ -28,7 +29,10 @@ app.post('/register', zValidator('json', LoginSchema), async (c) => {
   // Check if the user is already in the database.
   const user = await db.select().from(users).where(eq(users.username, username));
 
-  if (user.length > 0) return c.text('User already exists', 400);
+  if (user.length > 0) return c.json({
+    message: 'User already exists',
+    status: 400
+  }, 400);
 
   // Create user.
   const result = await db.insert(users).values({ username, password});
