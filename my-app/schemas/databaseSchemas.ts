@@ -5,8 +5,3 @@ export const users = pgTable("users", {
     username: text().notNull().unique(),
     password: text().notNull()
 });
-
-export const test = pgTable("test", {
-    username: text(),
-    password: text(),
-});
